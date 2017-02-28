@@ -2,7 +2,7 @@ package com.ical.test.newrealm;
 
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
-import android.util.Log;
+import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
@@ -22,39 +22,75 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        // Initialise realm only once
+        //Mapping the components
+        add = (Button) findViewById(R.id.add);
+        view = (Button) findViewById(R.id.view);
+        update = (Button) findViewById(R.id.update);
+        delete = (Button) findViewById(R.id.delete);
+        roll_no = (EditText) findViewById(R.id.roll_no);
+        name = (EditText) findViewById(R.id.name);
+        text = (TextView) findViewById(R.id.text);
+
         Realm.init(this);
+        realm = Realm.getDefaultInstance();
+    }
 
-        // To get the realm instance
-        Realm realm = Realm.getDefaultInstance();
+    public void clickAction(View view){
+        switch (view.getId()){
+            case R.id.add:  addRecord();
+                break;
+            case R.id.view: viewRecord();
+                break;
+            case R.id.update:   updateRecord();
+                break;
+            case R.id.delete:   deleteRecord();
+        }
+    }
 
-        // To write the realm db
-        realm.beginTransaction();
-        Student student = realm.createObject(Student.class);
-        student.setRoll_no(20);
-        student.setName("neeraj mishra");
+        public void addRecord(){
+            realm.beginTransaction();
 
-        realm.commitTransaction();
+            Student student = realm.createObject(Student.class);
+            student.setRoll_no(Integer.parseInt(roll_no.getText().toString()));
+            student.setName(name.getText().toString());
 
-
-        RealmResults<Student> results = realm.where(Student.class).findAll();
-
-        for(Student student1 : results){
-            Log.d("just", "onCreate: "+student1.getRoll_no() + " " + student1.getName());
+            realm.commitTransaction();
         }
 
-        //Update the db
-        RealmResults<Student> result = realm.where(Student.class).equalTo("roll_no", 20).findAll();
+        public void viewRecord(){
+            RealmResults<Student> results = realm.where(Student.class).findAll();
 
-        realm.beginTransaction();
+            text.setText("");
 
-        for(Student student2 : result){
-            student.setName("neeraj mishra thukali");
+            for(Student student : results){
+                text.append(student.getRoll_no() + " " + student.getName() + "\n");
+            }
         }
 
-        realm.commitTransaction();
+        public void updateRecord(){
+            RealmResults<Student> results = realm.where(Student.class).equalTo("roll_no", Integer.parseInt(roll_no.getText().toString())).findAll();
 
+            realm.beginTransaction();
 
+            for(Student student : results){
+                student.setName(name.getText().toString());
+            }
 
+            realm.commitTransaction();
+        }
+
+        public void deleteRecord(){
+            RealmResults<Student> results = realm.where(Student.class).equalTo("roll_no", Integer.parseInt(roll_no.getText().toString())).findAll();
+
+            realm.beginTransaction();
+
+            results.deleteAllFromRealm();
+
+            realm.commitTransaction();
+        }
+    @Override
+    protected void onDestroy() {
+        realm.close();
+        super.onDestroy();
     }
 }
